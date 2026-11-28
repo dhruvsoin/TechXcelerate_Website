@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Cinzel, Cinzel_Decorative, Cormorant_Garamond, Geist } from "next/font/google";
 import SmoothScroll from "@/components/scroll/SmoothScroll";
 import Header from "@/components/layout/Header";
-import ChapterRail from "@/components/scroll/ChapterRail";
 import SoundToggle from "@/components/scroll/SoundToggle";
 import { site } from "@/content/site";
 import "./globals.css";
@@ -33,7 +32,7 @@ const sans = Geist({
 
 export const metadata: Metadata = {
   title: `${site.name} 2027 · ${site.label}`,
-  description: `${site.name} — the ${site.label.toLowerCase()} of the ${site.organiser.department}, ${site.organiser.university}. ${site.dates}.`,
+  description: `${site.name}: ${site.tagline}. The ${site.label} of the ${site.organiser.department}, ${site.organiser.university}. ${site.dates}.`,
 };
 
 export const viewport: Viewport = {
@@ -53,7 +52,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SmoothScroll>
           <Header />
           {children}
-          <ChapterRail />
           <SoundToggle />
         </SmoothScroll>
       </body>

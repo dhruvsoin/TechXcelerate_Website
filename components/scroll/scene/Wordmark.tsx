@@ -1,4 +1,5 @@
 import { LETTERS, SWASHES, WORDMARK_VIEWBOX } from "./wordmark-paths";
+import { LETTER_PATHS, SWASH_PATHS } from "./wordmark-letters";
 
 /**
  * Antique-copper wordmark, built as SVG:
@@ -153,6 +154,27 @@ export function Wordmark({ title, idPrefix = "wm" }: { title: string; idPrefix?:
             <Shapes fill="none" stroke={`url(#${id}-rim)`} strokeWidth="4.4" strokeLinejoin="round" />
           </g>
         </g>
+      </svg>
+
+      {/* Ink & gild intro: each letter is drawn in gold ink, then gilded, and the swashes are drawn last
+          like pen flourishes. This copy is unfiltered, so it animates cheaply; when it's done, the full
+          copper wordmark underneath fades in and this copy fades away. */}
+      <svg viewBox={VB} className="wordmark-ink" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id={`${id}-gilt`} gradientUnits="userSpaceOnUse" x1="0" y1={VY + VH * 0.12} x2="0" y2={VY + VH * 0.86}>
+            <stop offset="0" stopColor="#FFE3B8" />
+            <stop offset="0.25" stopColor="#E9B97A" />
+            <stop offset="0.5" stopColor={C.burnished} />
+            <stop offset="0.75" stopColor="#E3A465" />
+            <stop offset="1" stopColor={C.deep} />
+          </linearGradient>
+        </defs>
+        {LETTER_PATHS.map((d, i) => (
+          <path key={`l${i}`} d={d} pathLength={1} fill={`url(#${id}-gilt)`} className="wordmark-ink-stroke" style={{ "--d": `${(0.15 + i * 0.1).toFixed(2)}s` } as React.CSSProperties} />
+        ))}
+        {SWASH_PATHS.map((s, j) => (
+          <path key={`s${j}`} d={s.d} pathLength={1} fill={`url(#${id}-gilt)`} className="wordmark-ink-stroke" style={{ "--d": s.x < VX + VW / 2 ? "1.55s" : "1.8s" } as React.CSSProperties} />
+        ))}
       </svg>
 
       {/* Travelling reflection, kept unfiltered so it animates cheaply */}

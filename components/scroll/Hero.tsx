@@ -11,6 +11,7 @@ import Eagle, { type Flight } from "./scene/Eagle";
 import { Wordmark, WordmarkDivider } from "./scene/Wordmark";
 import { CASTLE_BLUR, WINDOWS } from "./scene/castle-data";
 import Countdown from "./Countdown";
+import LivingPhoto from "./scene/LivingPhoto";
 import { playSfx } from "@/components/sound/realm-audio";
 
 const EAGLE_MAIN: Flight = { cx: 0.8, cy: 0.22, radius: 0.1, size: 0.042, period: 26, phase: 0.6, haze: 0.08, flapEvery: 9 };
@@ -147,6 +148,7 @@ export default function Hero({ scrollParallax = true }: HeroProps) {
               blurDataURL={CASTLE_BLUR}
               className="object-cover"
             />
+            <LivingPhoto />
             <div className="castle-lights">
               {WINDOWS.map(([x, y], i) => (
                 <span
@@ -161,7 +163,7 @@ export default function Hero({ scrollParallax = true }: HeroProps) {
       </div>
 
       {/* ---------- Atmosphere (decorative) ---------- */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+      <div data-l="atmos" aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="sunlight absolute inset-0" />
         <div className="sky-wisps absolute inset-x-0 top-0 h-[26%]">
           <div className="wisp-track wisp-track-slow" />
@@ -258,16 +260,18 @@ export default function Hero({ scrollParallax = true }: HeroProps) {
             className="reveal hero-ctas flex items-center justify-center gap-8"
             style={{ "--i": 5 } as React.CSSProperties}
           >
-            <a href={site.hero.enter.href} onClick={(e) => (playSfx("compass"), go(site.hero.enter.href)(e))} className="realm-btn" aria-label={site.hero.enter.label}>
-              <CompassRing />
-              <span className="realm-btn-label" aria-hidden="true">
-                Enter
-                <br />
-                the Realm
+            {/* "Scroll down to enter the Realm": the words between gold flourish lines, with three
+                diamonds below (like the map markers) lighting up one after another, downwards. */}
+            <a href={site.hero.enter.href} onClick={(e) => (playSfx("compass"), go(site.hero.enter.href)(e))} className="enter-cue" aria-label={site.hero.enter.label}>
+              <span className="enter-cue-kicker" aria-hidden="true">Scroll down</span>
+              <span className="enter-cue-row" aria-hidden="true">
+                <span className="enter-cue-title">To enter the Realm</span>
               </span>
-            </a>
-            <a href={site.hero.register.href} onClick={(e) => (playSfx("seal"), go(site.hero.register.href)(e))} className="text-link">
-              {site.hero.register.label}
+              <span className="enter-cue-diamonds" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
             </a>
           </div>
         </div>
@@ -283,38 +287,5 @@ export default function Hero({ scrollParallax = true }: HeroProps) {
         ))}
       </ul>
     </section>
-  );
-}
-
-/** Decorative outer ring with compass ticks and cardinal diamonds; rotates on hover. */
-function CompassRing() {
-  const ticks = Array.from({ length: 72 }, (_, i) => i * 5);
-  return (
-    <svg viewBox="0 0 160 160" className="realm-ring" aria-hidden="true" focusable="false">
-      <circle cx="80" cy="80" r="77" fill="none" stroke="currentColor" strokeOpacity="0.35" strokeWidth="0.75" />
-      <g className="realm-ring-rotor">
-        {ticks.map((a) => {
-          const long = a % 45 === 0;
-          const r1 = long ? 66 : 70;
-          const rad = (a * Math.PI) / 180;
-          return (
-            <line
-              key={a}
-              x1={80 + Math.sin(rad) * r1}
-              y1={80 - Math.cos(rad) * r1}
-              x2={80 + Math.sin(rad) * 74}
-              y2={80 - Math.cos(rad) * 74}
-              stroke="currentColor"
-              strokeOpacity={long ? 0.85 : 0.4}
-              strokeWidth={long ? 1 : 0.6}
-            />
-          );
-        })}
-        {[0, 90, 180, 270].map((a) => (
-          <path key={a} d="M80 0.5 L83 5 L80 9.5 L77 5 Z" fill="currentColor" transform={`rotate(${a} 80 80)`} />
-        ))}
-      </g>
-      <circle cx="80" cy="80" r="60" fill="none" stroke="currentColor" strokeWidth="1.1" />
-    </svg>
   );
 }

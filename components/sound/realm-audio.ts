@@ -5,8 +5,8 @@
  * Off by default; it starts only when the visitor turns sound on (a click), and goes quiet when
  * the tab is hidden.
  *
- *  Beds (follow the scroll):  valley wind, birdsong and eagle cries on the hero → a swell of mist in
- *                             the transition → high, airy wind and distant surf over the map.
+ *  Beds (follow the scroll):  valley wind, birdsong and eagle cries on the hero → a warm swell as the
+ *                             camera pushes into the castle → high, airy wind and distant surf over the map.
  *  Moments:                   a warm chord as the kingdom appears (and again at the finale), a glassy
  *                             shimmer while the golden path draws, a rising bell at each location
  *                             (the ten stops play a little tune), parchment for the details panel,
@@ -134,11 +134,12 @@ class RealmAudio {
     this.t = t;
     if (!this.enabled) return;
     this.mix(0.25);
-    if (this.chordArmed && t >= 13.5 && t < 30) {
+    // the kingdom chord lands on the castle match-cut (timeline 7.5)
+    if (this.chordArmed && t >= 7.5 && t < 30) {
       this.chordArmed = false;
       this.chord(1);
     }
-    if (t < 8) this.chordArmed = true;
+    if (t < 5) this.chordArmed = true;
     if (this.finaleArmed && t >= 93.5) {
       this.finaleArmed = false;
       this.chord(0.7);
@@ -189,9 +190,10 @@ class RealmAudio {
     const c = this.ctx;
     if (!c) return;
     const now = c.currentTime, t = this.t;
-    const heroLvl = 1 - smooth(4, 11, t);
-    const skyLvl = smooth(8, 16, t);
-    const mistLvl = smooth(2.5, 9, t) * (1 - smooth(9, 16, t));
+    // the valley fades as the camera pushes in; the swell peaks at the cut (7.5) as the glow fills the screen
+    const heroLvl = 1 - smooth(3, 8, t);
+    const skyLvl = smooth(7.5, 14, t);
+    const mistLvl = smooth(2, 7.5, t) * (1 - smooth(7.5, 12, t));
     this.hero?.out.gain.setTargetAtTime(heroLvl * 0.9, now, tc);
     this.sky?.out.gain.setTargetAtTime(skyLvl * (this.ambience ? 0.45 : 0.8), now, tc);
     if (this.mist) {

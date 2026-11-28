@@ -2,9 +2,9 @@
  * TechXcelerate competitions — the single source of truth for the realm map,
  * the online/offline panels, the camera route and the event details.
  *
- * ⚠️  CONFIRM BEFORE LAUNCH. The project had no event data; names below come from the
- * PRD (§11 "Brochure issues"). Everything not stated there is marked TBA, and the
- * fields listed in `MISSING_EVENT_DATA` must be supplied by the organisers.
+ * Names and the online/offline split are confirmed by the organisers (5 online, 5 offline).
+ * Everything else not yet supplied is marked TBA; the fields listed in `MISSING_EVENT_DATA`
+ * must still come from the organisers before launch.
  */
 import type { LandmarkKey } from "./realm-map";
 import { site, TBA } from "./site";
@@ -15,10 +15,7 @@ export type RealmEvent = {
   id: string;
   /** Final spelling still to be confirmed where noted. */
   name: string;
-  /**
-   * Online/offline split is PROVISIONAL: the PRD says 5 online + 5 offline but not which.
-   * `modeConfirmed: false` until the organisers confirm.
-   */
+  /** Online or offline, as confirmed by the organisers (`modeConfirmed`). */
   mode: EventMode;
   modeConfirmed: boolean;
   category: string;
@@ -40,31 +37,37 @@ const common = {
   rules: [] as string[],
   fee: "Free (registration currently has no fee)",
   registerHref: site.hero.register.href,
-  modeConfirmed: false,
+  modeConfirmed: true,
 };
 
-/** Order = order of discovery along the golden pathway (alternates offline / online). */
+const ONLINE = `Online · platform ${TBA}`;
+const ON_CAMPUS = `On campus · ${TBA}`;
+
+/**
+ * Order = order of discovery along the golden pathway (the camera route). Online (5): Hackathon,
+ * Promptathon, CTF, Valorant, Tech Quiz. Offline (5): Data Forge, IT Manager, Architecture Pitch,
+ * Anime Design, GenesisChain Quest.
+ */
 export const EVENTS: RealmEvent[] = [
-  { ...common, id: "hackathon", name: "Hackathon", mode: "offline", landmark: "citadel", venue: `On campus · ${TBA}`, teamSize: `Up to 3 (to confirm)` },
-  { ...common, id: "promptathon", name: "Promptathon", mode: "online", landmark: "observatory", venue: `Online · platform ${TBA}`, teamSize: "2 (brochure rules; badge says up to 3)" },
-  { ...common, id: "dataforge", name: "DataForge", mode: "offline", landmark: "workshop", venue: `On campus · ${TBA}`, teamSize: `Up to 3 (to confirm)` },
-  { ...common, id: "ctf", name: "CTF", mode: "online", landmark: "castle", venue: `Online · platform ${TBA}`, teamSize: "2 (brochure rules; badge says up to 3)" },
-  { ...common, id: "it-manager", name: "IT Manager", mode: "offline", landmark: "palace", venue: `On campus · ${TBA}`, teamSize: "Solo" },
-  { ...common, id: "valorant", name: "Valorant", mode: "online", landmark: "exhibition", venue: `Online · platform ${TBA}`, teamSize: "2 (brochure rules; game format to confirm)" },
-  { ...common, id: "event-9", name: `Competition ${TBA}`, mode: "offline", landmark: "lighthouse", venue: `On campus · ${TBA}`, teamSize: TBA },
-  { ...common, id: "anime-design", name: "Anime Design", mode: "online", landmark: "garden", venue: `Online · platform ${TBA}`, teamSize: "2 (brochure rules; badge says up to 3)" },
-  { ...common, id: "event-10", name: `Competition ${TBA}`, mode: "offline", landmark: "village", venue: `On campus · ${TBA}`, teamSize: TBA },
-  { ...common, id: "tech-quiz", name: "Tech Quiz", mode: "online", landmark: "library", venue: `Online · platform ${TBA}`, teamSize: "2 (brochure rules; badge says up to 3)" },
+  { ...common, id: "hackathon", name: "Hackathon", mode: "online", landmark: "citadel", venue: ONLINE, teamSize: `Up to 3 (to confirm)` },
+  { ...common, id: "promptathon", name: "Promptathon", mode: "online", landmark: "observatory", venue: ONLINE, teamSize: "2 (brochure rules; badge says up to 3)" },
+  { ...common, id: "data-forge", name: "Data Forge", mode: "offline", landmark: "workshop", venue: ON_CAMPUS, teamSize: `Up to 3 (to confirm)` },
+  { ...common, id: "ctf", name: "CTF", mode: "online", landmark: "castle", venue: ONLINE, teamSize: "2 (brochure rules; badge says up to 3)" },
+  { ...common, id: "it-manager", name: "IT Manager", mode: "offline", landmark: "palace", venue: ON_CAMPUS, teamSize: "Solo" },
+  { ...common, id: "valorant", name: "Valorant", mode: "online", landmark: "exhibition", venue: ONLINE, teamSize: "2 (brochure rules; game format to confirm)" },
+  { ...common, id: "architecture-pitch", name: "Architecture Pitch", mode: "offline", landmark: "lighthouse", venue: ON_CAMPUS, teamSize: TBA },
+  { ...common, id: "anime-design", name: "Anime Design", mode: "offline", landmark: "garden", venue: ON_CAMPUS, teamSize: "2 (brochure rules; badge says up to 3)" },
+  { ...common, id: "genesischain-quest", name: "GenesisChain Quest", mode: "offline", landmark: "village", venue: ON_CAMPUS, teamSize: TBA },
+  { ...common, id: "tech-quiz", name: "Tech Quiz", mode: "online", landmark: "library", venue: ONLINE, teamSize: "2 (brochure rules; badge says up to 3)" },
 ];
 
 /** Everything the organisers still need to supply (shown in the README, not on the site). */
 export const MISSING_EVENT_DATA = [
-  "Names of the two remaining competitions (event-9, event-10)",
-  "Which five competitions are online and which five offline (current split is provisional)",
   "Category, description and rules for every competition",
-  "Day and time for each competition, and on-campus venues",
-  "Final team sizes (brochure badge vs rules conflict) and Valorant game format",
-  "Final spellings: DataForge / DataForce, Promptathon / Prompt-a-Thon",
+  "Day and time for each competition, the online platforms and the on-campus venues",
+  "Team sizes for Architecture Pitch and GenesisChain Quest",
+  "Final team sizes for the rest (brochure badge vs rules conflict) and the Valorant game format",
+  "Final spelling: Promptathon / Prompt-a-Thon",
 ] as const;
 
 export const isTBA = (v: string) => v.includes(TBA);

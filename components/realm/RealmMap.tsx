@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { EVENTS } from "@/content/events";
 import { LANDMARKS, PATHWAY, REALM_MAP } from "@/content/realm-map";
-import { realmActions, realmStore, useRealm } from "./realm-store";
+import { realmActions, realmCamera, realmStore, useRealm } from "./realm-store";
 import Raven from "@/components/scroll/scene/Raven";
 
 /** The world layer: map image, golden pathway and markers. Moved by the camera controller. */
@@ -71,6 +71,7 @@ function EventMarker({ index }: { index: number }) {
       <span className="realm-marker-diamond" aria-hidden="true" />
       <span className="realm-marker-label" aria-hidden="true">
         <span className="realm-marker-name">{ev.name}</span>
+        <span className="realm-title-rule" />
         <span className="realm-marker-place">{lm.label}</span>
       </span>
     </button>
@@ -106,23 +107,113 @@ export function AtmosphericEffects() {
 }
 
 /** Antique compass rose. */
+const MAP_RATIO = REALM_MAP.width / REALM_MAP.height;
+const shortest = (a: number) => ((((a + 180) % 360) + 360) % 360) - 180;
+
+/**
+ * A live compass. The rose stays fixed to the map (north up); a magnetic needle above it points
+ * where the journey is heading — north over the overview, the event being flown to while
+ * travelling, and the next stop once you've arrived. The needle runs on a damped spring, so it
+ * swings past, wobbles and settles like a real one, with a faint tremble at rest. A glint circles
+ * the brass ring and a ripple runs out on each arrival. Static (needle north) for reduced motion.
+ */
 export function CompassRose({ className = "" }: { className?: string }) {
   const pts = [0, 45, 90, 135, 180, 225, 270, 315];
+  const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
+  const svg = useRef<SVGSVGElement>(null);
+  const needle = useRef<SVGGElement>(null);
+  const arrivals = useRealm((s) => (s.arrived ? s.active : -1));
+
+  useEffect(() => {
+    const el = svg.current, n = needle.current;
+    if (!el || !n || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let angle = 0, vel = 0, raf = 0, last = performance.now(), visible = false;
+
+    const bearing = () => {
+      const { active, arrived } = realmStore.get();
+      if (active < 0) return 0; // overview: true north
+      const i = arrived ? Math.min(active + 1, EVENTS.length - 1) : active;
+      if (arrived && i === active) return 0; // last stop reached
+      const lm = LANDMARKS[EVENTS[i].landmark];
+      const dx = (lm.gx - realmCamera.u) * MAP_RATIO, dy = lm.gy - realmCamera.v;
+      if (Math.hypot(dx, dy) < 0.004) return angle; // right on top of it: hold
+      return (Math.atan2(dx, -dy) * 180) / Math.PI;
+    };
+
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (!visible || document.hidden) return;
+      const t = now / 1000;
+      const tremble = Math.sin(t * 0.9) * 2.2 + Math.sin(t * 2.3 + 1) * 0.9; // a needle is never quite still
+      const diff = shortest(bearing() + tremble - angle);
+      vel += (diff * 38 - vel * 5.2) * dt; // underdamped spring: swings past, then settles
+      angle += vel * dt;
+      n.setAttribute("transform", `rotate(${angle.toFixed(2)} 60 60)`);
+    };
+
+    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting && el.getClientRects().length > 0));
+    io.observe(el);
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+    };
+  }, []);
+
   return (
-    <svg viewBox="0 0 120 120" className={`realm-compass ${className}`} aria-hidden="true">
-      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeOpacity=".5" />
-      <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" strokeOpacity=".35" strokeDasharray="1 3" />
-      {pts.map((a) => (
-        <path key={a} d={a % 90 === 0 ? "M60 8 L66 60 L60 54 L54 60 Z" : "M60 24 L63 60 L60 57 L57 60 Z"} fill={a % 90 === 0 ? "url(#rose-fill)" : "currentColor"} fillOpacity={a % 90 === 0 ? 1 : 0.55} transform={`rotate(${a} 60 60)`} />
-      ))}
+    <svg ref={svg} viewBox="0 0 120 120" className={`realm-compass ${className}`} aria-hidden="true">
       <defs>
         <linearGradient id="rose-fill" x1="0" y1="0" x2="1" y2="0">
           <stop offset=".5" stopColor="#F5D8B0" />
           <stop offset=".5" stopColor="#A66A3F" />
         </linearGradient>
+        <linearGradient id="needle-n" x1="0" y1="0" x2="1" y2="0">
+          <stop offset=".5" stopColor="#FFE3B8" />
+          <stop offset=".5" stopColor="#D49560" />
+        </linearGradient>
+        <linearGradient id="needle-s" x1="0" y1="0" x2="1" y2="0">
+          <stop offset=".5" stopColor="#5E9C93" />
+          <stop offset=".5" stopColor="#2B5A56" />
+        </linearGradient>
+        <radialGradient id="compass-glass" cx=".38" cy=".32" r=".7">
+          <stop offset="0" stopColor="#F5D8B0" stopOpacity=".16" />
+          <stop offset=".55" stopColor="#F5D8B0" stopOpacity=".03" />
+          <stop offset="1" stopColor="#F5D8B0" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <circle cx="60" cy="60" r="4" fill="#326C68" stroke="currentColor" />
-      <text x="60" y="6" textAnchor="middle" fontSize="8" fill="currentColor" style={{ fontFamily: "var(--font-cinzel)" }}>N</text>
+
+      {/* brass ring with degree ticks */}
+      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeOpacity=".5" />
+      {ticks.map((a) => (
+        <line key={a} x1="60" y1={a % 90 === 0 ? 5.5 : 6.5} x2="60" y2="9" stroke="currentColor" strokeOpacity={a % 90 === 0 ? 0.8 : 0.35} strokeWidth=".6" transform={`rotate(${a} 60 60)`} />
+      ))}
+      <g className="compass-glint">
+        <circle cx="60" cy="60" r="56" fill="none" stroke="#FFE9C4" strokeWidth="1.4" strokeLinecap="round" strokeDasharray="16 336" />
+      </g>
+      <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" strokeOpacity=".35" strokeDasharray="1 3" />
+
+      {/* the fixed rose, a little quieter so the needle reads first */}
+      <g opacity=".62">
+        {pts.map((a) => (
+          <path key={a} d={a % 90 === 0 ? "M60 8 L66 60 L60 54 L54 60 Z" : "M60 24 L63 60 L60 57 L57 60 Z"} fill={a % 90 === 0 ? "url(#rose-fill)" : "currentColor"} fillOpacity={a % 90 === 0 ? 1 : 0.55} transform={`rotate(${a} 60 60)`} />
+        ))}
+      </g>
+
+      {/* arrival ripple (re-keyed so it replays at every stop) */}
+      {arrivals >= 0 && <circle key={arrivals} className="compass-ripple" cx="60" cy="60" r="20" fill="none" stroke="#F5D8B0" strokeWidth="1.2" />}
+
+      {/* the magnetic needle */}
+      <g ref={needle} className="compass-needle">
+        <path d="M60 14 L63.6 60 L56.4 60 Z" fill="url(#needle-n)" />
+        <path d="M60 106 L63.6 60 L56.4 60 Z" fill="url(#needle-s)" />
+        <circle cx="60" cy="16.5" r="1.3" fill="#FFF3DA" className="compass-needle-tip" />
+      </g>
+      <circle cx="60" cy="60" r="4.2" fill="#326C68" stroke="currentColor" />
+      <circle cx="59" cy="59" r="1.3" fill="#BFE3DA" opacity=".7" />
+      <circle cx="60" cy="60" r="55" fill="url(#compass-glass)" />
+      <text x="60" y="4.6" textAnchor="middle" fontSize="7" fill="currentColor" style={{ fontFamily: "var(--font-cinzel)" }}>N</text>
     </svg>
   );
 }

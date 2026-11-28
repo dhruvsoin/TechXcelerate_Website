@@ -9,6 +9,8 @@ export const TBA = "TBA";
 export const site = {
   name: "TechXcelerate",
   shortName: "TXC",
+  /** The fest's official tagline. */
+  tagline: "Accelerating to Extraordinary",
   label: "Inter-Institutional IT Fest",
   dates: "4–5 February 2027",
   datesShort: "4–5 Feb 2027",
@@ -28,8 +30,8 @@ export const site = {
   ],
   hero: {
     intro: "A Journey Beyond the Ordinary",
-    subtitle: "Discover a Realm of Endless Possibilities",
-    enter: { label: "Enter the Realm", href: "#realm-map" },
+    subtitle: "Accelerating to Extraordinary", // the tagline, under the title
+    enter: { label: "Scroll down to enter the Realm", href: "#realm-map" },
     register: { label: "Register", href: "#throne-room" },
   },
   social: [] as { label: string; href: string }[],

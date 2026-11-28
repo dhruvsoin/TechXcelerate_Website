@@ -46,6 +46,22 @@ export function useRealm<T>(select: (s: RealmState) => T): T {
   return useSyncExternalStore(realmStore.subscribe, () => select(state), () => select(serverState));
 }
 
+/**
+ * Where the map camera is looking (map fractions, 0–1). Written by the camera controller on every
+ * move and read by the live compass each frame — a plain object, so it never re-renders React.
+ */
+export const realmCamera = {
+  u: 0.5,
+  v: 0.5,
+  /** Where the map sits on the stage, in CSS px: offset and on-screen size (for screen-space effects). */
+  tx: 0,
+  ty: 0,
+  ws: 1,
+  hs: 1,
+  /** How much of the golden path has been drawn, 0–1 (the lantern procession only walks that part). */
+  path: 0,
+};
+
 /** Actions are provided by the experience once its timeline exists. */
 export const realmActions = {
   goToEvent: (i: number) => {
